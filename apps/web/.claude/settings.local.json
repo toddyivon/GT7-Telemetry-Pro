@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(ls:*)",
+      "Bash(npx convex dev:*)",
+      "Bash(timeout 10s npm run dev)",
+      "Bash(npm run build:*)",
+      "Bash(grep:*)",
+      "Bash(npx tsc:*)",
+      "Bash(docker build:*)",
+      "Bash(chmod:*)",
+      "Bash(docker:*)",
+      "Bash(docker-compose:*)",
+      "Bash(sudo docker compose:*)",
+      "Bash(systemctl:*)",
+      "Bash(sudo systemctl start:*)",
+      "Bash(curl:*)",
+      "Bash(find:*)",
+      "Bash(npx:*)",
+      "Bash(npm install)",
+      "Bash(npm run lint)",
+      "Bash(npm install:*)",
+      "Bash(rm:*)",
+      "Bash(sudo docker build:*)"
+    ],
+    "deny": []
+  }
+}

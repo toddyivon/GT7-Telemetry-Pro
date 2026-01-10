@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      # Add other env vars here
+    networks:
+      - gt7-network
+
+  # Add other services like Convex (if self-hosted) or a proxy here if needed
+
+networks:
+  gt7-network:
+    driver: bridge

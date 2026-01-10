@@ -1,0 +1,91 @@
+services:
+  # Main GT7 Data Analysis application
+  gt7-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_CONVEX_URL=${NEXT_PUBLIC_CONVEX_URL:-http://convex:3210}
+      - CONVEX_DEPLOYMENT=${CONVEX_DEPLOYMENT:-anonymous:anonymous-gt7-data-analysis}
+      # Authentication environment variables
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-gt7-super-secret-key-for-development}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      # Stripe environment variables (optional)
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
+    volumes:
+      # Mount uploads directory for telemetry files
+      - telemetry_uploads:/app/uploads
+    depends_on:
+      - convex
+    networks:
+      - gt7-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Convex development server (for local development)
+  convex:
+    image: node:18-alpine
+    working_dir: /app
+    command: sh -c "npm install -g convex && convex dev --host 0.0.0.0"
+    ports:
+      - "3210:3210"
+      - "8187:8187"  # Convex dashboard
+    environment:
+      - CONVEX_DEPLOYMENT=${CONVEX_DEPLOYMENT:-anonymous:anonymous-gt7-data-analysis}
+    volumes:
+      - ./convex:/app/convex
+      - ./package.json:/app/package.json
+      - convex_data:/app/.convex
+    networks:
+      - gt7-network
+    restart: unless-stopped
+
+  # Redis for caching (optional, for future enhancements)
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - gt7-network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  # Nginx reverse proxy (optional, for production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - gt7-app
+    networks:
+      - gt7-network
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  telemetry_uploads:
+    driver: local
+  convex_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  gt7-network:
+    driver: bridge
