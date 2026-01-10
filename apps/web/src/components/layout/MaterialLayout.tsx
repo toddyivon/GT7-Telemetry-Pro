@@ -136,6 +136,9 @@ interface User {
   role: string;
 }
 
+// Pages that should NOT have the dashboard layout
+const AUTH_PAGES = ['/login', '/register', '/forgot-password', '/reset-password'];
+
 export default function MaterialLayout({ children }: MaterialLayoutProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
@@ -145,6 +148,14 @@ export default function MaterialLayout({ children }: MaterialLayoutProps) {
   const pathname = usePathname();
   const theme = useTheme();
   const { mode, toggleTheme } = useCustomTheme();
+
+  // Check if current page is an auth page (should not have layout)
+  const isAuthPage = AUTH_PAGES.some(page => pathname?.startsWith(page));
+
+  // If it's an auth page, render children without the dashboard layout
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
 
   useEffect(() => {
     const checkAuth = async () => {
