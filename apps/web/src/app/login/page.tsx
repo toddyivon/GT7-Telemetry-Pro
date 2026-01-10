@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Box,
@@ -15,6 +15,7 @@ import {
   InputAdornment,
   IconButton,
   Divider,
+  Chip,
 } from '@mui/material';
 import {
   Email,
@@ -22,17 +23,20 @@ import {
   Visibility,
   VisibilityOff,
   Login as LoginIcon,
+  PlayArrow as DemoIcon,
 } from '@mui/icons-material';
-import { useAuth, useGuestOnly } from '@/hooks/useAuth';
+import { enableDemoMode, DEMO_USER } from '@/lib/mockData';
 
 function LoginForm() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [localError, setLocalError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [demoLoading, setDemoLoading] = useState(false);
 
   const searchParams = useSearchParams();
-  const { login, isLoading, error, clearError, isAuthenticated, isInitialized } = useGuestOnly();
 
   // Check for session expiration message
   useEffect(() => {
@@ -42,51 +46,45 @@ function LoginForm() {
     }
   }, [searchParams]);
 
-  // Clear errors when inputs change
-  useEffect(() => {
-    if (error) clearError();
-    if (localError) setLocalError('');
-  }, [email, password]);
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLocalError('');
+    setIsLoading(true);
 
     if (!email || !password) {
       setLocalError('Email and password are required');
+      setIsLoading(false);
       return;
     }
 
-    const result = await login(email, password);
-    if (!result.success && result.error) {
-      setLocalError(result.error);
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        router.push('/dashboard');
+      } else {
+        const data = await response.json();
+        setLocalError(data.error || 'Login failed. Please try again.');
+      }
+    } catch (error) {
+      setLocalError('Connection error. Try Demo Mode to explore the app.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const handleDemoLogin = () => {
-    setEmail('missola@test.com');
-    setPassword('master');
+  const handleDemoMode = () => {
+    setDemoLoading(true);
+    enableDemoMode();
+    // Redirect to dashboard after enabling demo mode
+    setTimeout(() => {
+      router.push('/dashboard');
+    }, 500);
   };
-
-  // Show loading while checking auth state
-  if (!isInitialized) {
-    return (
-      <Container maxWidth="sm">
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <CircularProgress />
-        </Box>
-      </Container>
-    );
-  }
-
-  const displayError = localError || error;
 
   return (
     <Container maxWidth="sm">
@@ -96,6 +94,7 @@ function LoginForm() {
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          py: 4,
         }}
       >
         <Paper
@@ -103,22 +102,56 @@ function LoginForm() {
           sx={{
             p: 4,
             width: '100%',
-            maxWidth: 400,
+            maxWidth: 420,
           }}
         >
           <Box sx={{ textAlign: 'center', mb: 3 }}>
             <LoginIcon sx={{ fontSize: 48, color: 'primary.main', mb: 2 }} />
             <Typography variant="h4" component="h1" gutterBottom>
-              GT7 Data Analysis
+              GT7 Telemetry Pro
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              Sign in to access your racing data
+              Professional racing telemetry analysis
             </Typography>
           </Box>
 
-          {displayError && (
+          {/* Demo Mode Banner */}
+          <Paper
+            sx={{
+              p: 2,
+              mb: 3,
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+            }}
+          >
+            <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
+              Try Demo Mode
+            </Typography>
+            <Typography variant="body2" sx={{ mb: 2, opacity: 0.9 }}>
+              Explore the app with sample racing data - no account needed!
+            </Typography>
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={handleDemoMode}
+              disabled={demoLoading}
+              startIcon={demoLoading ? <CircularProgress size={16} color="inherit" /> : <DemoIcon />}
+              sx={{
+                bgcolor: 'rgba(255,255,255,0.2)',
+                '&:hover': { bgcolor: 'rgba(255,255,255,0.3)' },
+              }}
+            >
+              {demoLoading ? 'Loading Demo...' : 'Enter Demo Mode'}
+            </Button>
+          </Paper>
+
+          <Divider sx={{ my: 2 }}>
+            <Chip label="or sign in" size="small" />
+          </Divider>
+
+          {localError && (
             <Alert severity="error" sx={{ mb: 2 }} onClose={() => setLocalError('')}>
-              {displayError}
+              {localError}
             </Alert>
           )}
 
@@ -132,7 +165,6 @@ function LoginForm() {
               margin="normal"
               required
               autoComplete="email"
-              autoFocus
               disabled={isLoading}
               InputProps={{
                 startAdornment: (
@@ -183,26 +215,6 @@ function LoginForm() {
             >
               {isLoading ? <CircularProgress size={24} /> : 'Sign In'}
             </Button>
-
-            <Divider sx={{ my: 2 }}>
-              <Typography variant="caption" color="text.secondary">
-                OR
-              </Typography>
-            </Divider>
-
-            <Button
-              fullWidth
-              variant="outlined"
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-              sx={{ mb: 2 }}
-            >
-              Use Demo Account
-            </Button>
-
-            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', textAlign: 'center', mb: 2 }}>
-              Demo: missola@test.com / master
-            </Typography>
 
             <Box sx={{ textAlign: 'center' }}>
               <Typography variant="body2">
