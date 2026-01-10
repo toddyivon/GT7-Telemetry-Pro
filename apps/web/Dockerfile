@@ -19,8 +19,11 @@ WORKDIR /app
 # Copy installed dependencies
 COPY --from=deps /app/node_modules ./node_modules
 
-# Copy web app source
+# Copy web app source including public folder
 COPY apps/web/ ./
+
+# Ensure public directory exists
+RUN mkdir -p public
 
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
@@ -40,7 +43,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-# Copy public folder
+# Copy public folder from builder (now guaranteed to exist)
 COPY --from=builder /app/public ./public
 
 # Set permissions for prerender cache
