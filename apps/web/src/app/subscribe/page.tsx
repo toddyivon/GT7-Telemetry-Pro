@@ -1,8 +1,5 @@
 'use client';
 
-// Force dynamic rendering to prevent static generation errors
-export const dynamic = 'force-dynamic';
-
 import React, { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
@@ -17,6 +14,7 @@ import {
   Tab,
   useTheme,
   alpha,
+  CircularProgress,
 } from '@mui/material';
 import {
   Speed as SpeedIcon,
@@ -153,8 +151,8 @@ const faqs = [
   },
 ];
 
-export default function SubscribePage() {
-  const theme = useTheme();
+// Component that uses useSearchParams - must be wrapped in Suspense
+function SubscribeNotifications() {
   const searchParams = useSearchParams();
   const [snackbar, setSnackbar] = useState<{
     open: boolean;
@@ -165,9 +163,7 @@ export default function SubscribePage() {
     message: '',
     severity: 'info',
   });
-  const [featureTab, setFeatureTab] = useState(0);
 
-  // Handle URL parameters for success/cancel
   useEffect(() => {
     const canceled = searchParams.get('canceled');
     const error = searchParams.get('error');
@@ -188,6 +184,28 @@ export default function SubscribePage() {
       });
     }
   }, [searchParams]);
+
+  return (
+    <Snackbar
+      open={snackbar.open}
+      autoHideDuration={6000}
+      onClose={() => setSnackbar({ ...snackbar, open: false })}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+    >
+      <Alert
+        onClose={() => setSnackbar({ ...snackbar, open: false })}
+        severity={snackbar.severity}
+        variant="filled"
+      >
+        {snackbar.message}
+      </Alert>
+    </Snackbar>
+  );
+}
+
+export default function SubscribePage() {
+  const theme = useTheme();
+  const [featureTab, setFeatureTab] = useState(0);
 
   return (
     <Box sx={{ py: 6, minHeight: '100vh', bgcolor: 'background.default' }}>
@@ -524,21 +542,10 @@ export default function SubscribePage() {
         </Box>
       </Container>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={6000}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-      >
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          variant="filled"
-        >
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
+      {/* Snackbar for notifications - wrapped in Suspense */}
+      <Suspense fallback={null}>
+        <SubscribeNotifications />
+      </Suspense>
     </Box>
   );
 }
