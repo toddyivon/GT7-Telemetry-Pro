@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Box,
@@ -53,15 +53,6 @@ function LoginForm() {
   const [localError, setLocalError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [demoLoading, setDemoLoading] = useState(false);
-
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const expired = searchParams?.get('expired');
-    if (expired === 'true') {
-      setLocalError('Your session has expired. Please log in again.');
-    }
-  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,23 +271,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense
-      fallback={
-        <Box
-          sx={{
-            minHeight: '100vh',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            background: 'linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%)',
-          }}
-        >
-          <CircularProgress sx={{ color: 'white' }} />
-        </Box>
-      }
-    >
-      <LoginForm />
-    </Suspense>
-  );
+  return <LoginForm />;
 }
