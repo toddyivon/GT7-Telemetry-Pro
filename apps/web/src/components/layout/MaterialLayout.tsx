@@ -152,12 +152,11 @@ export default function MaterialLayout({ children }: MaterialLayoutProps) {
   // Check if current page is an auth page (should not have layout)
   const isAuthPage = AUTH_PAGES.some(page => pathname?.startsWith(page));
 
-  // If it's an auth page, render children without the dashboard layout
-  if (isAuthPage) {
-    return <>{children}</>;
-  }
-
+  // useEffect must be called before any conditional returns (React hooks rules)
   useEffect(() => {
+    // Skip auth check for auth pages
+    if (isAuthPage) return;
+
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/auth/me');
@@ -170,7 +169,12 @@ export default function MaterialLayout({ children }: MaterialLayoutProps) {
       }
     };
     checkAuth();
-  }, [pathname]);
+  }, [pathname, isAuthPage]);
+
+  // If it's an auth page, render children without the dashboard layout
+  if (isAuthPage) {
+    return <>{children}</>;
+  }
 
   const handleDrawerClose = () => {
     setIsClosing(true);
