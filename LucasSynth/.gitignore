@@ -1,0 +1,14 @@
+# Build output
+build/
+cmake-build-*/
+*.vst3
+*.component
+*.app
+
+# IDE
+.idea/
+.vscode/
+*.user
+
+# OS
+.DS_Store
