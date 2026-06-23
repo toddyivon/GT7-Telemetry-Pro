@@ -192,3 +192,66 @@ stripe trigger invoice.payment_failed
 - `/src/hooks/useSubscription.ts` - React hook for subscription state
 - `/convex/subscriptions.ts` - Convex mutations/queries
 - `/convex/schema.ts` - Database schema
+
+---
+
+## Go-Live Checklist (Switch from TEST to LIVE)
+
+This checklist must be completed before accepting real payments. Use TEST mode for v1.
+
+### Step 1: Get Live Stripe Keys
+- [ ] Go to https://dashboard.stripe.com/apikeys (ensure **Live mode** toggle is ON)
+- [ ] Copy **Secret key** (`sk_live_...`) → set as `STRIPE_SECRET_KEY` in Vercel
+- [ ] Copy **Publishable key** (`pk_live_...`) → set as `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` in Vercel
+
+### Step 2: Create Live Products (same as test but in live mode)
+- [ ] Switch Stripe dashboard to **Live mode**
+- [ ] Create "GT7 Telemetry Pro - Premium" product → $9.99/month recurring
+  - Copy price ID → `STRIPE_PRICE_PREMIUM` (format: `price_live_...`)
+  - Optional: $99.90/year → `STRIPE_PRICE_PREMIUM_YEARLY`
+- [ ] Create "GT7 Telemetry Pro - Pro" product → $19.99/month recurring, 7-day trial
+  - Copy price ID → `STRIPE_PRICE_PRO` (format: `price_live_...`)
+  - Optional: $199.90/year → `STRIPE_PRICE_PRO_YEARLY`
+
+### Step 3: Wire Webhook (Production)
+- [ ] Go to https://dashboard.stripe.com/webhooks → Add endpoint
+- [ ] URL: `https://gt7-telemetry-pro.vercel.app/api/stripe/webhook`
+- [ ] Select events: `checkout.session.completed`, `customer.subscription.created`,
+  `customer.subscription.updated`, `customer.subscription.deleted`,
+  `customer.subscription.trial_will_end`, `invoice.payment_succeeded`, `invoice.payment_failed`
+- [ ] Copy **Signing secret** → `STRIPE_WEBHOOK_SECRET` in Vercel
+
+### Step 4: Wire Convex (Production Database)
+- [ ] Create project at https://dashboard.convex.dev
+- [ ] Copy CONVEX_URL (format: `https://xxx.convex.cloud`) → `NEXT_PUBLIC_CONVEX_URL` in Vercel
+- [ ] Get Deploy Key from project settings → set as `CONVEX_DEPLOY_KEY` in CI/CD
+
+### Step 5: Set Vercel Env Vars and Redeploy
+```bash
+# Set each value via Vercel CLI or dashboard
+vercel env add STRIPE_SECRET_KEY production
+vercel env add NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY production
+vercel env add STRIPE_WEBHOOK_SECRET production
+vercel env add STRIPE_PRICE_PREMIUM production
+vercel env add STRIPE_PRICE_PRO production
+vercel env add NEXT_PUBLIC_CONVEX_URL production
+# Then redeploy:
+vercel deploy --prod --yes
+```
+
+### Step 6: Verify End-to-End
+- [ ] Sign up as new user on https://gt7-telemetry-pro.vercel.app
+- [ ] Navigate to /subscribe → click "Get Premium"
+- [ ] Use test card 4242 4242 4242 4242 to complete checkout
+- [ ] Confirm Stripe dashboard shows subscription created
+- [ ] Confirm dashboard shows Premium tier active
+- [ ] Test billing portal at /settings
+
+### Deployed Infrastructure
+| Service | URL | Status |
+|---------|-----|--------|
+| Web App | https://gt7-telemetry-pro.vercel.app | ✅ Live |
+| Vercel Project | https://vercel.com/toddyivons-projects/gt7-telemetry-pro | ✅ Active |
+| Convex Backend | TBD — pending project creation | ⏳ Needs setup |
+| Stripe Webhook | `https://gt7-telemetry-pro.vercel.app/api/stripe/webhook` | ⏳ Needs keys |
+
