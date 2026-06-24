@@ -622,3 +622,14 @@ export const createTestUser = mutation({
     return safeUser;
   },
 });
+
+// Hard-delete a user by ID (admin/cleanup only)
+export const deleteUserById = mutation({
+  args: { userId: v.id("users") },
+  handler: async (ctx, args) => {
+    const user = await ctx.db.get(args.userId);
+    if (!user) throw new Error("User not found");
+    await ctx.db.delete(args.userId);
+    return { deleted: args.userId, email: user.email };
+  },
+});

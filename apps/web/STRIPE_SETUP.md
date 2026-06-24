@@ -166,6 +166,21 @@ stripe trigger invoice.payment_failed
 4. Store customer IDs securely
 5. Implement proper error handling
 
+## Credential Rules (non-negotiable)
+
+**Never paste API keys, deploy keys, or webhook secrets in issue threads, chat, or emails.**
+This applies to test keys too — they appear in logs, get indexed, and set bad habits.
+
+The only places secrets should live:
+- `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `NEXT_PUBLIC_CONVEX_URL`: Vercel dashboard or `vercel env add VARNAME production`
+- `CONVEX_DEPLOY_KEY`: Convex dashboard → project settings → deploy keys, set in CI only
+- Local dev: `.env.local` (git-ignored, never committed)
+
+**Rotation process (if a key is ever exposed):**
+1. Stripe: dashboard.stripe.com → Developers → API keys → Roll key → update Vercel env → redeploy
+2. Convex deploy key: dashboard.convex.dev → project settings → generate new key → update Vercel env → redeploy
+3. Verify old key no longer works before closing the incident
+
 ## Troubleshooting
 
 ### Webhook not receiving events
