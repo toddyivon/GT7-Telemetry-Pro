@@ -247,11 +247,24 @@ vercel deploy --prod --yes
 - [ ] Confirm dashboard shows Premium tier active
 - [ ] Test billing portal at /settings
 
+### TEST MODE — Currently Active
+
+Stripe TEST mode is wired and working. Real keys can be swapped without code changes.
+
+| Resource | ID / Value | Status |
+|----------|-----------|--------|
+| Stripe Account | acct_1Tlh3z8IE3zG6jIa | TEST mode |
+| Premium Price | `price_1TlhOb8IE3zG6jIatXe9XmDv` | $9.99/mo ✅ |
+| Pro Price | `price_1TlhOd8IE3zG6jIafxs72JWB` | $19.99/mo ✅ |
+| Webhook Endpoint | `we_1TlhOk8IE3zG6jIamYFZLC29` | enabled ✅ |
+| Webhook URL | `https://gt7-telemetry-pro.vercel.app/api/stripe/webhook` | live ✅ |
+| Convex Deployment | `keen-goat-711.convex.cloud` | deployed ✅ |
+
 ### Deployed Infrastructure
 | Service | URL | Status |
 |---------|-----|--------|
 | Web App | https://gt7-telemetry-pro.vercel.app | ✅ Live |
 | Vercel Project | https://vercel.com/toddyivons-projects/gt7-telemetry-pro | ✅ Active |
-| Convex Backend | TBD — pending project creation | ⏳ Needs setup |
-| Stripe Webhook | `https://gt7-telemetry-pro.vercel.app/api/stripe/webhook` | ⏳ Needs keys |
+| Convex Backend | https://keen-goat-711.convex.cloud | ✅ Deployed |
+| Stripe Webhook | `https://gt7-telemetry-pro.vercel.app/api/stripe/webhook` | ✅ Registered |
 
