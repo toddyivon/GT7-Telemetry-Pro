@@ -31,48 +31,47 @@ export async function POST(request: NextRequest) {
 
     const normalizedEmail = email.toLowerCase();
 
+    // Demo account shortcircuit — bypasses Convex so "Try Demo" always works
+    if (normalizedEmail === DEMO_USER.email) {
+      const isValidPassword =
+        password === 'master' ||
+        password === 'Master123!' ||
+        (await verifyPassword(password, DEMO_USER.passwordHash));
+
+      if (!isValidPassword) {
+        return NextResponse.json(
+          { error: 'Invalid email or password' },
+          { status: 401 }
+        );
+      }
+
+      const tokens = await generateTokenPair({
+        userId: DEMO_USER._id,
+        email: DEMO_USER.email,
+        role: DEMO_USER.role,
+      });
+
+      const response = NextResponse.json({
+        user: {
+          id: DEMO_USER._id,
+          email: DEMO_USER.email,
+          name: DEMO_USER.name,
+          role: DEMO_USER.role,
+          subscription: DEMO_USER.subscription,
+        },
+        message: 'Login successful',
+      });
+
+      response.cookies.set('access_token', tokens.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
+      response.cookies.set('refresh_token', tokens.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
+
+      return response;
+    }
+
     // Check if Convex client is available
     if (!convexClient) {
       // Fallback for development without Convex
       console.warn('Convex not available, using mock authentication');
-
-      // Check demo user
-      if (normalizedEmail === DEMO_USER.email) {
-        // For demo, accept both old password and new format
-        const isValidPassword = password === 'master' ||
-          password === 'Master123!' ||
-          await verifyPassword(password, DEMO_USER.passwordHash);
-
-        if (!isValidPassword) {
-          return NextResponse.json(
-            { error: 'Invalid email or password' },
-            { status: 401 }
-          );
-        }
-
-        const tokens = await generateTokenPair({
-          userId: DEMO_USER._id,
-          email: DEMO_USER.email,
-          role: DEMO_USER.role,
-        });
-
-        const response = NextResponse.json({
-          user: {
-            id: DEMO_USER._id,
-            email: DEMO_USER.email,
-            name: DEMO_USER.name,
-            role: DEMO_USER.role,
-            subscription: DEMO_USER.subscription,
-          },
-          message: 'Login successful',
-        });
-
-        response.cookies.set('access_token', tokens.accessToken, ACCESS_TOKEN_COOKIE_OPTIONS);
-        response.cookies.set('refresh_token', tokens.refreshToken, REFRESH_TOKEN_COOKIE_OPTIONS);
-
-        return response;
-      }
-
       return NextResponse.json(
         { error: 'Invalid email or password' },
         { status: 401 }
